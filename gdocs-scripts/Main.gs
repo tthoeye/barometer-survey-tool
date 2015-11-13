@@ -1,7 +1,7 @@
 /**
- * W3F Web Index Survey - Google Spreadsheets POST proxy
+ * W3F ODB Survey - Google Spreadsheets POST proxy
  *
- * Copyright (C) 2014  Ben Doherty @ Oomph, Inc., and Tim Davies at the Web Foundation
+ * Copyright (C) 2014  Ben Doherty @ Oomph, Inc., and Tim Davies and Carlos Iglesias at the Web Foundation
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ var DOMAIN = 'webfoundation.org';
  * Return the survey URL for a particular answer sheet key
  */
 function surveyUrl(key) {
-  return 'http://survey.thewebindex.org/' + key;
+  return 'http://odb.opendataresearch.org/' + key;
 }
 
 /**
@@ -89,17 +89,16 @@ function createAnswerSheet(country) {
 
   ass.toast("Creating answer sheet", country.name, -1);
   
-  newSheet = ss.copy("WIS 2014 Answers - " + country.name);
+  newSheet = ss.copy("ODB 2015 Answers - " + country.name);
   
   control.getRange("Q" + country.row).setValue(newSheet.getId());
-  
+  country.answerSheet = newSheet.getId();
+
+  // Copy to archive folder  
   file = DriveApp.getFileById(newSheet.getId());
+  folder.addFile(file);  
   
-  folder.addFile(file);
-  
-  country.answerSheet = file.getId();
-  
-  return file.getId();
+  return file.getId();  
 }
 
 /**
@@ -203,8 +202,8 @@ function setupAnswerSheet(country, sheet) {
     Logger.log("Failed to limit sharing by editors", e);
   }
   
-
-  ass.toast('Done', country.name);
+  
+  ass.toast('Done', country.name); 
 }
 
 
@@ -214,6 +213,25 @@ function setupAnswerSheet(country, sheet) {
  * with newStatus.
  */
 function refreshAnswerSheet(country, newStatus) {
+  var requiredColumns = [
+    'Question ID',
+    'Response',
+    'Confidence',
+    'Justification',
+    'PrivateNotes',
+    'Example0',
+    'Example1',
+    'Example2',
+    'Example3',
+    'Example4',
+    'Supporting0',
+    'Supporting1',
+    'Supporting2',
+    'Supporting3',
+    'Supporting4',
+    'Supporting5'
+   ];
+  
   var ass = SpreadsheetApp.getActiveSpreadsheet(),
       control = ass.getSheetByName('Control');
 
@@ -297,6 +315,15 @@ function refreshAnswerSheet(country, newStatus) {
       firstColumn = 21,
       answers = {}; // Per-section answer counts
 
+  // Ensure answer sheet has all the proper columns in it
+  var headerRow = answerSheet.getRange(1, 1, 1, requiredColumns.length);
+  for(var i = 1; i <= headerRow.getLastColumn(); i++) {
+    var cell = headerRow.getCell(1,i);
+    if(cell.getValue() != requiredColumns[i-1]) {
+      cell.setValue(requiredColumns[i-1]);
+    }
+  }
+  
   for(var i = 0, answerRow; i < answerGrid.length, answerRow = answerGrid[i]; i++) {
     if(!answerRow.questionId) {
       continue;
@@ -312,8 +339,9 @@ function refreshAnswerSheet(country, newStatus) {
     if(!answers[question.sectionId]) {
       answers[question.sectionId] = 0;
     }
-
-    if(answers.response != '-') {
+    
+    // Count non-empty, non-'-' answers  only
+    if(!String(answerRow.response).match(/^(-|\s*)?$/)) {
       answers[question.sectionId]++;
       total++;
     }
@@ -400,10 +428,13 @@ function getDeadline(days_to_add, text) {
 
 function archiveSheet(id, stage) {
     var folderID = getConfig("archive_folder");
-    var sheet = DocsList.getFileById(id);
-    var folder = DocsList.getFolderById(folderID);
+    // var sheet = DocsList.getFileById(id); -> DEPRECATED
+    var sheet = DriveApp.getFileById(id);
+    // var folder = DocsList.getFolderById(folderID); -> DEPRECTAED
+    var folder = DriveApp.getFolderById(folderID);
     var copy = sheet.makeCopy("ARCHIVE ONLY: " + sheet.getName() + " - Stage " + stage + " - " + getDeadline());
-    copy.addToFolder(folder);
+    // copy.addToFolder(folder); -> DEPRECATED
+    folder.addFile(copy);
 }
 
 /*
@@ -435,24 +466,39 @@ function mailAlert(state, subs) {
 
   ass.toast("Sending email to " + email.recipients, subs.country, -1);
 
-  MailApp.sendEmail({
-    to: email.recipients,
-    subject: email.subject,
-    name: "The Web Index Survey",
-    replyTo: subs.coordinatorEmail,
-    body: email.body,
-    // Turn comma-separated attachment config vars, which are just file IDs, into PDFs
-    attachments: email.attachments.split(',').map(function(attachment_var) {
-      try {
-        return DocsList.getFileById(getConfig(attachment_var)).getAs(MimeType.PDF);
-      }
-      catch(e) {
-        Logger.log("There was an error getting the attachment `" + attachment_var + "` (" + getConfig(attachment_var) + ")");
-      }
-
-      return false;
-    }).filter(function(v) { return !!v; })
-  });
+  try {
+    MailApp.sendEmail({
+      to: email.recipients,
+      subject: email.subject,
+      name: "The ODB Survey",
+      replyTo: subs.coordinatorEmail,
+      body: email.body,
+      // Turn comma-separated attachment config vars, which are just file IDs, into PDFs
+      attachments: email.attachments.split(',').map(function(attachment_var) {
+        try {
+          // return DocsList.getFileById(getConfig(attachment_var)).getAs(MimeType.PDF); DocsList DEPRECATED
+          return DriveApp.getFileById(getConfig(attachment_var)).getAs(MimeType.PDF);
+        }
+        catch(e) {
+          Logger.log("There was an error getting the attachment `" + attachment_var + "` (" + getConfig(attachment_var) + ")");
+        }
+  
+        return false;
+      }).filter(function(v) { return !!v; })
+    });
+ } catch(e) {
+   Logger.log("There was a problem sending a version of this e-mail with attachments. Trying without")
+   try {
+   MailApp.sendEmail({
+       to: email.recipients,
+       subject: email.subject,
+       name: "The ODB Survey",
+       replyTo: subs.coordinatorEmail,
+     body: email.body + "\n\n NOTE: Due to a server error we could not add attachments to this e-mail. Please contact your coordinator for copies of the attachments if you require them."});
+   } catch(e) {
+     ass.toast("Failed to send mail to " + email.recipients + ". Set into recruitment and back again to trigger mail", subs.country);
+     Logger.log("There was an error sending mail to the researcher")}
+   }  
 
   ass.toast("Email sent to " + email.recipients, subs.country);
 }
@@ -501,16 +547,13 @@ function handleStateChange(country, state) {
   }
 
   // Get email of current user for saving notes
-  var userEmail = Session.getUser().getEmail();
-
   var notes = control.getRange(country.row, 5).getNote().split("\n---\n").map(function(note) {
-    var matches = note.match(/^(.+): (\w+) \| (.+): ([\s\S]+)$/);
+    var matches = note.match(/^(.+): (\w+): ([\s\S]+)$/);
 
     return matches ? {
       date: matches[1],
       status: matches[2],
-      party: matches[3],
-      message: matches[4]
+      message: matches[3]
     } : false;
   }).filter(function(val) {
     return !!val;
@@ -525,12 +568,11 @@ function handleStateChange(country, state) {
     notes.unshift({
       status: state,
       date: date.toDateString() + ' ' + date.toLocaleTimeString(),
-      party: userEmail,
       message: message
     });
 
     control.getRange(country.row, 5).setNote(notes.map(function(note) {
-      return note.date + ': ' + note.status + ' | ' + note.party + ': ' + note.message;
+      return note.date + ': ' + note.status + ': ' + note.message;
     }).join("\n---\n"));
   }
 
@@ -671,9 +713,10 @@ function authorise() {
   handbook = getConfig("handbook");
   folderID = getConfig("folder");
   DriveApp.getFileById(masterSheetID);
-  DocsList.getFileById(masterSheetID);
-  DocsList.getFileById(handbook);
-  DocsList.getFolderById(folderID);
+  // DocsList.getFileById(masterSheetID); -> DEPRECATED
+  // DocsList.getFileById(handbook); -> DEPRECATED
+  DriveApp.getFileById(handbook);
+  // DocsList.getFolderById(folderID); -> DEPRECATED
+  DriveApp.getFolderById(folderID);
 }
-
 
