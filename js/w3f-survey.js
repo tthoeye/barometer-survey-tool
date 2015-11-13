@@ -16,9 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-var MASTER_KEY = '0ApqzJROt-jZ0dGRWb004RnNBR0xwbGtOTUNkUzd4Umc';
-var CLIENT_ID = '727497619634-av6gm7hkv2k9brcvp74f595795hk2vfg.apps.googleusercontent.com';
-var SERVICE_ACCOUNT = '727497619634-av6gm7hkv2k9brcvp74f595795hk2vfg@developer.gserviceaccount.com'
+
+
+var MASTER_KEY = '1K_WrEt2wbvcPAu7jMk60eGKoEmidpm5lzHqREN_ILs4';
+var CLIENT_ID = '1083194213469-brjujs3utpn68cu618ur9f6idrncm2v6.apps.googleusercontent.com';
+var SERVICE_ACCOUNT = '1083194213469-osgq2aiskq8qenu8e7rb8ndouo3f6shk@developer.gserviceaccount.com';
 var SCOPE = 'https://spreadsheets.google.com/feeds https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file';
 
 // Gimme a range op!
@@ -277,7 +279,10 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 
 		// Clear the lock for this survey. Do this when we navigate away or complete
 		$rootScope.unlockSurvey = function() {
-			gs.deleteRow($rootScope.links.control['Last Access'].edit, $rootScope.accessToken);
+			// ADDED TO AVOID FAILING WHEN THE CONTROL DOES NOT EXIST
+			if($rootScope.links.control['Last Access']) {
+				gs.deleteRow($rootScope.links.control['Last Access'].edit, $rootScope.accessToken);
+			}
 		}
 
 		// Potential status flow
