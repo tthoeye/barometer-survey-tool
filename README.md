@@ -109,6 +109,17 @@ SERVICE_ACCOUNT - should by the E-mail address given in the Google Developer Con
  - The Service Account Details
  - A path to where you have uploaded the p12 key obtained in step 2.
 
+Edit the proxy.config file in a text editor and introduce your domain for allowedReferers or mustMatch="false" to proxy any site (only recommended for testing purpouses).
+
+* Test that the proxy is installed and available:
+```
+http://[yourmachine]/proxy/proxy.php?ping
+```
+* Test that the proxy is able to forward requests directly in the browser using:
+```
+http://[yourmachine]/proxy/proxy.php?http://example.org
+```
+See the [instructions] (https://github.com/Esri/resource-proxy/tree/master/PHP) for more advanced settings and troubleshooting.
 
 ### Set up the Control Sheet
 
