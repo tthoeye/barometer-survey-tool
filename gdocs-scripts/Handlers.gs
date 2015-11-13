@@ -1,5 +1,5 @@
 /**
- * W3F Web Index Survey - Control Spreadsheet Event Handlers
+ * W3F ODB Survey - Control Spreadsheet Event Handlers
  *
  * Copyright (C) 2014  Ben Doherty @ Oomph, Inc.
  *
@@ -42,6 +42,7 @@ function periodicUpdate(event) {
  * synchronize accordingly
  */
 function onUpdate(event) {  
+  
   // Get sheet headers for duck-typing the sheet (Don't getSheetName() == 'Control' because the call is VERY slow)
   var ass = SpreadsheetApp.getActiveSpreadsheet(),
       control = ass.getSheetByName('Control'),
@@ -96,8 +97,8 @@ function onUpdate(event) {
       Browser.msgBox("Couldn't find associated status for state " + state);
       return;
     }
-    
-    if(country.answerSheet == '') {    
+
+    if(country.answerSheet == '' || country.answerSheet == undefined) {    
       // Make an answer sheet if there isn't one
       if(state != 'recruitment') {
         createAnswerSheet(country);
@@ -116,7 +117,6 @@ function onUpdate(event) {
     return;
   }
   
-  refreshAnswerSheet(country);
+  refreshAnswerSheet(country, state);
   setupAnswerSheet(country, ss);
 }
-
