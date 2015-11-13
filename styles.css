@@ -263,14 +263,14 @@ button {
 
 	.question-Scale .scale-response {
 		float: left;
-		width: 50%;
+		/* width: 50%; */
 	}
 		.question-Scale .scale-response .score-container {
 			position: relative;
 		}
 	.question-Scale .confidence {
 		float: right;
-		width: 50%;
+		/* width: 50%; */
 	}
 
 	.question-Option .response {
