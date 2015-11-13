@@ -71,7 +71,8 @@ angular.module('GoogleSpreadsheets', [])
 		};
 
 		function getSheets(key, accessToken) {
-			var url = 'https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
+			// using php proxy to avoid CORS fail
+			var url = 'http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
 
 			if(accessToken) {
 				url += '?access_token=' + accessToken;
@@ -124,7 +125,8 @@ angular.module('GoogleSpreadsheets', [])
 		};
 
 		function getRows(key, sheet, accessToken, useKey) {
-			var url = 'https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
+			// using php proxy to avoid CORS fail
+			var url = 'http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
 
 			if(accessToken) {
 				url += '?access_token=' + accessToken;
