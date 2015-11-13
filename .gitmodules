@@ -1,0 +1,3 @@
+[submodule "resource-proxy"]
+	path = resource-proxy
+	url = https://github.com/carlosiglesias/resource-proxy/
