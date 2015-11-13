@@ -1,5 +1,5 @@
 /**
- * W3F Web Index Survey - Survey Data Loader
+ * W3F Open Data Barometer Survey - Survey Data Loader
  *
  * Copyright (C) 2014  Ben Doherty @ Oomph, Inc.
  *
@@ -96,7 +96,7 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 				$rootScope.anonymous = $rootScope.participant == 'Anonymous';
 				$rootScope.country = $rootScope.control['Country'];
 
-				if($rootScope.anonymous && !$rootScope.userEmail.match(/@(thewebindex\.org|webfoundation\.org|thinkoomph\.com)$/)) {
+				if($rootScope.anonymous && !$rootScope.userEmail.match(/@(thewebindex\.org|webfoundation\.org)$/)) {
 					q.reject();
 					return;
 				}
@@ -414,7 +414,7 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 
 			}
 			else {
-				deferred.reject("Thanks for visiting the Web Index Survey. You are not currently participating in the survey.");
+				deferred.reject("Thanks for visiting the Open Data Barometer Survey. You are not currently participating in the survey.");
 			}
 
 			return deferred.promise;
