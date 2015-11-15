@@ -9,7 +9,7 @@ A PHP proxy that handles support for
 * Enabling logging
 * Both resource and referer based rate limiting
 
-See [full instructions and original code at] (https://github.com/carlosiglesias/resource-proxy/tree/bump/PHP) for details
+See [full instructions and original code] (https://github.com/carlosiglesias/resource-proxy/tree/bump/PHP) for details
 
 Function isAllowedApplication at proxy.php has been adapted to allow http://domain.com/* wildcards for referers using regexp, as the survey has multiple and unpredictable http://surveydomain.com/surveyKey referals and otherwise it will be impossible to grant access to all of them unless using * wildcard option that is not recommended for final deployment given security constraints.
 
