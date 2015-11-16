@@ -23,13 +23,13 @@
  * This has addCommenter and removeCommenter support
  */
 
-var DOMAIN = 'webfoundation.org';
-
+var DOMAIN = 'barometer.lab.gent'; // previously webfoundation.org
+var SURVEYURL = 'http://barometer.lab.gent'; // previously http://odb.opendataresearch.org/
 /**
  * Return the survey URL for a particular answer sheet key
  */
 function surveyUrl(key) {
-  return 'http://odb.opendataresearch.org/' + key;
+  return SURVEYURL + key;
 }
 
 /**

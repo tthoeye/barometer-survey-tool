@@ -33,7 +33,7 @@ class Google_Service
    * @return Google_Client
    */
   public function getClient()
-  {
+     {
     return $this->client;
   }
 }
