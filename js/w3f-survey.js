@@ -17,10 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// previously:
+// var MASTER_KEY = '1K_WrEt2wbvcPAu7jMk60eGKoEmidpm5lzHqREN_ILs4';
+// var CLIENT_ID = '1083194213469-brjujs3utpn68cu618ur9f6idrncm2v6.apps.googleusercontent.com';
+// var SERVICE_ACCOUNT = '1083194213469-osgq2aiskq8qenu8e7rb8ndouo3f6shk@developer.gserviceaccount.com';
 
-var MASTER_KEY = '1K_WrEt2wbvcPAu7jMk60eGKoEmidpm5lzHqREN_ILs4';
-var CLIENT_ID = '1083194213469-brjujs3utpn68cu618ur9f6idrncm2v6.apps.googleusercontent.com';
-var SERVICE_ACCOUNT = '1083194213469-osgq2aiskq8qenu8e7rb8ndouo3f6shk@developer.gserviceaccount.com';
+var MASTER_KEY = '1ZSUifyBU0GZw4zcUw25TMlFdPc62Is8DgPMgYc35Qkc';
+var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
+var SERVICE_ACCOUNT = '333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k@developer.gserviceaccount.com';
 var SCOPE = 'https://spreadsheets.google.com/feeds https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file';
 
 // Gimme a range op!
@@ -64,8 +68,9 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 				if(matches[1] && (matches[1] == '](' || matches[1].substr(-1) == '<')) {
 					continue;
 				}
-
-				var markdownLink = '[' + matches[2] + '](' + matches[2] + ')';
+                                // escape underscores in link representation 
+                                var linkTitle = matches[2].replace(/_/g,'\\_');
+				var markdownLink = '[' + linkTitle + '](' + matches[2] + ')';
 				input = input.replace(matches[2], markdownLink);
 				linkRegex.lastIndex += markdownLink.length - matches[2].length;
 			}
