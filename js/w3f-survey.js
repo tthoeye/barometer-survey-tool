@@ -399,7 +399,8 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 				//
 				// Watch responses to add any changes to the save queue
 				_.each(_.keys($rootScope.questions), function(qid) {
-					$rootScope.$watchCollection("responses['" + qid + "']", function(newValue, oldValue) {
+					
+                                        var watchResponses = function(newValue, oldValue) {
 						if(oldValue === newValue) {
 							return;
 						}
@@ -407,8 +408,13 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 						queue.responses[qid] = newValue;
 
 						localStorage['queue-' + answerKey] = JSON.stringify(queue);
-					});
-
+					};
+                                        
+                                        
+                                        $rootScope.$watchCollection("responses['" + qid + "']", watchResponses);
+                                        // Add equality watch for responses: needed to check for changes in examples
+                                        $rootScope.$watch("responses['" + qid + "']", watchResponses, true);
+                                        
 					var watchNotes = function(newValue, oldValue) {
 						if(oldValue === newValue) {
 							return;
@@ -433,6 +439,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 					// Also watch for changes in notes collections
 					$rootScope.$watchCollection("notes['" + qid + "']", watchNotes);
 					$rootScope.$watch("notes['" + qid + "']", watchNotes, true);
+                                        
 				});
 
 				//
@@ -620,7 +627,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 
 							pq[qid].then(function(row) {
 								var qid = row.questionid || row.id;
-
+                                                                console.log("updated row " + qid);
 								size--;
 
 								if(size == 0) {
@@ -1131,7 +1138,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 							if(status.status == 200) {
 								$scope.uploadState = "Uploaded";
 								$scope.model.fileId = results.id;
-
+                                                                console.log(results);
 								// Give editor access to the service account to allow it to copy
 								// the uploaded file elsewhere through drivecopy.php
 								var promise = gdrive.insertPermission($scope.model.fileId, 'user', SERVICE_ACCOUNT, 'writer');
