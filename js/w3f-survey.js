@@ -501,7 +501,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 								// Munge examples from model structure
                                                                 // @TODO: read number of example columns from answer sheet!
                                                                 for (var i = 0; i < 5; i++) {
-                                                                    if (i in values.example) {
+                                                                    if (values.example && i in values.example) {
                                                                         var example = values.example[i];
 									var ex = _.extend({}, {
 										url: '',
@@ -567,7 +567,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 									var record = {
 										questionid: note.questionid,
 										date: note.date,
-										party: $rootScope.participant,
+										party: note.party,
 										field: note.field,
 										note: note.note,
 										edited: note.edited,
