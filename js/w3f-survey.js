@@ -491,6 +491,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 								});
 
 								// Copy over any supporting information
+                                                                // @TODO: read number of supporting columns from answer sheet!
 								for(var i = 0; i < 10; i++) {
 									if(values['supporting' + i]) {
 										record['supporting' + i] = values['supporting' + i];
@@ -498,7 +499,10 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 								}
 
 								// Munge examples from model structure
-								_.each(values.example, function(example, i) {
+                                                                // @TODO: read number of example columns from answer sheet!
+                                                                for (var i = 0; i < 5; i++) {
+                                                                    if (i in values.example) {
+                                                                        var example = values.example[i];
 									var ex = _.extend({}, {
 										url: '',
 											text: ''
@@ -514,7 +518,11 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 									else if(ex.title) {
 										record['example' + i] = ex.title;
 									}
-								});
+                                                                    } else {
+                                                                        // As per the Sheets API, an empty cell is represented by an empty string
+                                                                        record['example' + i] = '';
+                                                                    }
+								};
 
 								var promise;
 
@@ -627,7 +635,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 
 							pq[qid].then(function(row) {
 								var qid = row.questionid || row.id;
-                                                                console.log("updated row " + qid);
 								size--;
 
 								if(size == 0) {
@@ -1138,7 +1145,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 							if(status.status == 200) {
 								$scope.uploadState = "Uploaded";
 								$scope.model.fileId = results.id;
-                                                                console.log(results);
 								// Give editor access to the service account to allow it to copy
 								// the uploaded file elsewhere through drivecopy.php
 								var promise = gdrive.insertPermission($scope.model.fileId, 'user', SERVICE_ACCOUNT, 'writer');
