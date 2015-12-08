@@ -29,7 +29,7 @@ var SURVEYURL = 'http://barometer.lab.gent'; // previously http://odb.opendatare
  * Return the survey URL for a particular answer sheet key
  */
 function surveyUrl(key) {
-  return SURVEYURL + key;
+  return SURVEYURL + '?' + key;
 }
 
 /**
@@ -432,7 +432,7 @@ function archiveSheet(id, stage) {
     var sheet = DriveApp.getFileById(id);
     // var folder = DocsList.getFolderById(folderID); -> DEPRECTAED
     var folder = DriveApp.getFolderById(folderID);
-    var copy = sheet.makeCopy("ARCHIVE ONLY: " + sheet.getName() + " - Stage " + stage + " - " + getDeadline());
+    var copy = sheet.makeCopy("ARCHIVE ONLY: " + sheet.getName() + " - Stage " + stage.label + " - " + getDeadline());
     // copy.addToFolder(folder); -> DEPRECATED
     folder.addFile(copy);
 }
