@@ -17,6 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('GoogleSpreadsheets', [])
+        .config(['$httpProvider', function($httpProvider) {
+                $httpProvider.defaults.useXDomain = true;
+                $httpProvider.defaults.headers.common = 'Content-Type: application/json';
+                delete $httpProvider.defaults.headers.common['X-Requested-With'];
+            }
+        ])
 	.factory('spreadsheets', [ '$http', '$q', function($http, $q) {
 		var service = this;
 
@@ -72,17 +78,19 @@ angular.module('GoogleSpreadsheets', [])
 
 		function getSheets(key, accessToken) {
 			// using php proxy to avoid CORS fail
-			var url = 'http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
-
+                        // previously http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/ ...
+			var url = 'http://barometer.lab.gent/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
+                        
 			if(accessToken) {
 				url += '?access_token=' + accessToken;
 			}
-
+                        
 			var deferred = defer();
 
 			$http({ 
-				url: url,
-				timeoout: deferred
+				method: 'GET',
+                                url: url,
+				timeout: deferred,
 			})
 				.success(function(data, status, headers, config) {
 					var xml = new DOMParser().parseFromString(data, "text/xml")
@@ -126,7 +134,8 @@ angular.module('GoogleSpreadsheets', [])
 
 		function getRows(key, sheet, accessToken, useKey) {
 			// using php proxy to avoid CORS fail
-			var url = 'http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
+                        // previously http://odb.opendataresearch.org/proxy/proxy.php
+			var url = 'http://barometer.lab.gent/proxy/proxy.php?https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
 
 			if(accessToken) {
 				url += '?access_token=' + accessToken;

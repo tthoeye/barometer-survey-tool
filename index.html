@@ -22,6 +22,8 @@
 		<base href="/" />
 		<title>World Wide Web Foundation Open Data Barometer 3rd edition{{ country ? ' - ' + country : ''}}</title>
 
+                
+                
 		<script src="js/jquery-1.11.0.min.js"></script>
 		<script src="js/underscore-min.js"></script>
 		<script src="js/markdown.js"></script>
@@ -34,13 +36,16 @@
 		<script src="js/w3f-angular-drive.js"></script>
 		<script src="js/w3f-load-survey.js"></script>
 		<script src="js/w3f-survey.js"></script>
-		<script src="https://apis.google.com/js/client:plusone.js?onload=gapi_loaded"></script>
+
+                
 
 		<link rel="stylesheet" href="styles.css" />
 		<link rel="stylesheet" href="icons.css" />
 	</head>
 
   <body ng-click="popup=false">
+
+                
 		<ul class="wis-progress">
 			<li ng-repeat="sectionid in sectionOrder" ng-style="{ width: (100 / sectionOrder.length) + '%' }" update-on-response>
 				<a ng-click="navigate(sectionid)">
@@ -69,12 +74,15 @@
 				<strong>Incognito Mode</strong> and close the browser window when you
 				are finished.</p>
 
-				<span style="display: none" id="signin-button"></span>
+				<span id="signin2-button"></span>
+                                
 			</div>
 
 			<div id="survey" ng-if="!error" ng-view></div>
 		</div>
 
 		<script src="js/chrome-only.js"></script>
+                <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
+                <!-- <script src="https://apis.google.com/js/client:platform.js" async defer></script> -->
 	</body>
 </html>

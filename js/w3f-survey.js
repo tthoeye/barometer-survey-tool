@@ -22,10 +22,16 @@
 // var CLIENT_ID = '1083194213469-brjujs3utpn68cu618ur9f6idrncm2v6.apps.googleusercontent.com';
 // var SERVICE_ACCOUNT = '1083194213469-osgq2aiskq8qenu8e7rb8ndouo3f6shk@developer.gserviceaccount.com';
 
+// Document ID of master control sheet
 var MASTER_KEY = '1ZSUifyBU0GZw4zcUw25TMlFdPc62Is8DgPMgYc35Qkc';
+// Browser API Key (set in developers console)
+var API_KEY = 'AIzaSyAQhae-OZhMJXA8s-4DGHzLKuXSV6_YN7g';
+// OAuth 2.0 client ID for "Web application client" (set in developers console)
 var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
+// OAuth 2.0 client ID for "Service account client" (set in developers console)
 var SERVICE_ACCOUNT = '333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k@developer.gserviceaccount.com';
-var SCOPE = 'https://spreadsheets.google.com/feeds https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file';
+// Scope definition of Google API's to access
+var SCOPE = 'profile email https://spreadsheets.google.com/feeds https://www.googleapis.com/auth/drive';
 
 // Gimme a range op!
 Array.prototype.range = function(n) {
@@ -1386,17 +1392,80 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 				.find('iframe').attr('src', '');
 		});
 
-		window.gapi_authenticated = function(authResult) {
-			if($rootScope.showSignin === false) {
-				return;
-			}
+                window.init = function() {
+                    console.log("init");
+                    gapi.load('auth2', function() {
+                        auth2 = gapi.auth2.init({
+                            client_id: CLIENT_ID,
+                            fetch_basic_profile: true,
+                            scope: SCOPE
+                        });
 
+                        if (!auth2.isSignedIn.get()) {
+                            console.log("not signed in");
+                            $rootScope.showSignin = true;
+                            $rootScope.$digest();
+                            gapi.signin2.render('signin2-button', {
+                                'scope': SCOPE,
+                                'width': 220,
+                                'height': 50,
+                                'longtitle': true,
+                                'theme': 'dark',
+                                'onsuccess': onSignInSuccess,
+                                'onfailure': onSignInFailure
+                            });
+                            return;
+                        } else {
+                            console.log("signed in");
+                        }
+                        //}
+                        // Sign the user in, and then retrieve their ID.
+                        // auth2.signIn().then(function() {
+                        //     console.log(auth2.currentUser.get().getId());
+                        // });
+                    });
+                }
+                
+                
+                window.onSignInSuccess = function(googleUser) {
+                    if (!googleUser)
+                        return false;
+                    var profile = googleUser.getBasicProfile();
+                    if (!profile)
+                        return false;
+                    
+                    $rootScope.user = googleUser;
+                    $rootScope.showSignin = false;
+                    $rootScope.accessToken = googleUser.getAuthResponse().access_token;
+                    console.log("Access Token: " + $rootScope.accessToken);
+                    $rootScope.loading = "Loading Survey...";
+                    $rootScope.status = {
+                            message: "Loading..."
+                    };
+                    $rootScope.$broadcast('load-survey');
+
+                }  
+                
+                
+                window.onSignInFailure = function() {
+                    console.log('Failure, could not sign you in!');
+                } 
+                /*
+		window.gapi_authenticated = function(authResult) {
+                    
+                        console.log("gapi_authenticated");
+                        console.log(authResult);
+                        
 			if(!authResult || authResult.error) {
 				$rootScope.showSignin = true;
 				$rootScope.$digest();
 				return;
 			}
 
+			if($rootScope.showSignin === false) {
+				return;
+			}
+                        
 			if(!authResult.status || !authResult.status.signed_in || $rootScope.accessToken) {
 				$rootScope.loading = false;
 				return;
@@ -1405,7 +1474,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 			var authComplete = function() {
 				$rootScope.accessToken = authResult.access_token;
 				$rootScope.showSignin = false;
-
+                                setTimeout(gapi_refresh, 10 * 1000);
 				loadSurvey();
 			}
 
@@ -1424,7 +1493,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 				gapi.client.load('oauth2', 'v2', function() {
 					gapi.client.oauth2.userinfo.get().execute(function(resp) {
 						$rootScope.userEmail = resp.email.toLowerCase();
-
 						authComplete();
 					});
 				});
@@ -1434,50 +1502,41 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 			else {
 				authComplete();
 			}
-
-			// Refresh the auth token at 75% of expires_in result
-			var refresh = function() {
-				gapi.auth.authorize({
-					client_id: CLIENT_ID,
-					scope: SCOPE,
-					immediate: true
-				}, setRefresh);
-			}
-
-			var setRefresh = function(authResult) {
-				if(!authResult || authResult.error) {
-					$rootScope.showSignin = true;
-					$rootScope.status = "Sign-in expired, please sign in again.";
-					return;
-				}
-
-				setTimeout(refresh, authResult.expires_in * .75 * 1000);
-			}
-
-			setRefresh(authResult);
 		};
 
 		window.gapi_authenticate = function() {
 			// render the sign-in button
-			gapi.signin.render('signin-button', {
-				clientid: CLIENT_ID,
+			gapi.signin2.render('signin-button', {
+				client_id: CLIENT_ID,
 				scope: SCOPE,
-				cookiepolicy: 'single_host_origin',
+				cookie_policy: 'single_host_origin',
 				callback: 'gapi_authenticated'
 			});
-		}
+		};
+                
+                window.gapi_refreshed = function(refreshedAuth) {
+                    if (!refreshedAuth || refreshedAuth.error) {
+                        console.log("Error refreshing token");
+                    } else {
+                        console.log(gapi.auth.getToken());
+                        console.log(gapi.auth.getToken().expires_in);
+                        setTimeout(gapi_refresh, 10 * 1000);
+                    }
+                };
+                
+                window.gapi_refresh = function() {
+                    console.log("gapi_refresh");
+                    gapi.auth.authorize({
+                            client_id: CLIENT_ID,
+                            scope: SCOPE,
+                            immediate: true,
+                            cookie_policy: "single_host_origin",
+                            response_type: "token gsession"
+                    }, gapi_refreshed);
+                };
+                
+                //gapi.client.setApiKey(API_KEY);
+                //gapi_authenticate();
+                */
 	} ]);
 
-window.gapi_loaded = function() {
-	var timer;
-
-	if(window.gapi_authenticate) {
-		clearTimeout(timer);
-
-		window.gapi_authenticate();
-	}
-	else {
-		// Wait until it is...
-		var timer = setTimeout(gapi_loaded, 200);
-	}
-}
