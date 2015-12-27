@@ -1165,6 +1165,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 											fileId: $scope.model.fileId,
 											fileName: results.title,
 											country: $rootScope.country,
+                                                                                        userEmail: $rootScope.userEmail,
 											action: 'uploadNew'
 										}
 									})
@@ -1398,59 +1399,90 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                         auth2 = gapi.auth2.init({
                             client_id: CLIENT_ID,
                             fetch_basic_profile: true,
-                            scope: SCOPE
+                            scope: 'profile'
                         });
+                        
+                        // Listen for sign-in state changes.
+                        // auth2.isSignedIn.listen(signinChanged);
 
-                        if (!auth2.isSignedIn.get()) {
-                            console.log("not signed in");
-                            $rootScope.showSignin = true;
-                            $rootScope.$digest();
-                            gapi.signin2.render('signin2-button', {
-                                'scope': SCOPE,
-                                'width': 220,
-                                'height': 50,
-                                'longtitle': true,
-                                'theme': 'dark',
-                                'onsuccess': onSignInSuccess,
-                                'onfailure': onSignInFailure
-                            });
-                            return;
-                        } else {
-                            console.log("signed in");
-                        }
-                        //}
-                        // Sign the user in, and then retrieve their ID.
-                        // auth2.signIn().then(function() {
-                        //     console.log(auth2.currentUser.get().getId());
-                        // });
+                        // Listen for changes to current user.
+                        // auth2.currentUser.listen(userChanged);
+
+                        // Sign in the user if they are currently signed in.
+                        
+                        auth2.then(function() {
+                            if (auth2.isSignedIn.get() == true) {
+                                auth2.signIn();
+                                signinSuccess();
+                            } else {
+                                $rootScope.showSignin = true;
+                                $rootScope.$digest();
+                                gapi.signin2.render('signin2-button', {
+                                    'scope': SCOPE,
+                                    'width': 220,
+                                    'height': 50,
+                                    'longtitle': true,
+                                    'theme': 'dark',
+                                    'onSuccess': signinSuccess,
+                                    'onFailure': signinFailure
+                                });
+                            }
+                        });   
                     });
-                }
+                    gapi.client.load('drive','v2');
+                };
                 
                 
-                window.onSignInSuccess = function(googleUser) {
-                    if (!googleUser)
-                        return false;
-                    var profile = googleUser.getBasicProfile();
-                    if (!profile)
-                        return false;
-                    
-                    $rootScope.user = googleUser;
+                window.signinChanged = function(val) {
+                    if (val) {
+                        showSurvey();
+                    } else {
+                        showSignin();
+                    }
+                };
+                
+                window.userChanged = function(user) {
+                    if (user.isSignedIn()) {
+                        showSurvey();
+                    } else {
+                        showSignin();
+                    }
+                };
+                
+                
+                window.signinSuccess = function() {
+                    console.log("signinSuccess");
+                    var user = gapi.auth2.getAuthInstance().currentUser.get();
+                    $rootScope.accessToken = user.getAuthResponse().access_token;
+                    $rootScope.userEmail = user.getBasicProfile().getEmail().toLowerCase();
+                    if ($rootScope.loading) {
+                        return;
+                    }
                     $rootScope.showSignin = false;
-                    $rootScope.accessToken = googleUser.getAuthResponse().access_token;
-                    console.log("Access Token: " + $rootScope.accessToken);
                     $rootScope.loading = "Loading Survey...";
                     $rootScope.status = {
                             message: "Loading..."
                     };
                     $rootScope.$broadcast('load-survey');
-
-                }  
-                
-                
-                window.onSignInFailure = function() {
-                    console.log('Failure, could not sign you in!');
                 } 
+                
+                window.signinFailure = function() {
+                    // Do nothing
+                }
                 /*
+                window.showSignin = function() {
+                    console.log("showsignin");
+                    $rootScope.showSignin = true;
+                    $rootScope.loaded = false;
+                    $rootScope.$digest();
+                    gapi.signin2.render('signin2-button', {
+                        'width': 220,
+                        'height': 50,
+                        'longtitle': true,
+                        'theme': 'dark',
+                    });
+                } 
+                
 		window.gapi_authenticated = function(authResult) {
                     
                         console.log("gapi_authenticated");

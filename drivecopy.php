@@ -74,7 +74,7 @@ if ( 'uploadNew' == $_GET['action'] ) {
 	$country = htmlspecialchars( $_GET['country'] );
 	$original_title = htmlspecialchars( $_GET['fileName'] );
 	$original_id = htmlspecialchars( $_GET['fileId'] );
-
+        $original_owner = htmlspecialchars( $_GET['userEmail'] );
 	$copied_file = new Google_Service_Drive_DriveFile();
 
 	// Prefix the filename with the country the survey is being taken for
@@ -95,9 +95,17 @@ if ( 'uploadNew' == $_GET['action'] ) {
 	$newPermission->setRole( 'writer' );
 	$newPermission->setType( 'user' );
 	$newPermission->setValue( 'files@thewebindex.org' );
+        
+        $origPermission = new Google_Service_Drive_Permission();
+	$origPermission->setRole( 'reader' );
+	$origPermission->setType( 'user' );
+	$origPermission->setValue( $original_owner );
 
 	try {
 		$perm = $service->permissions->insert( $new_file->id, $newPermission, array('sendNotificationEmails' => false) );
+                if ($original_owner) {
+                    $perm = $service->permissions->insert( $new_file->id, $origPermission, array('sendNotificationEmails' => false) );
+                }
 	} catch ( Exception $e ) {
 		$response = array(
 			'error' => $e->getMessage()

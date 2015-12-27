@@ -79,7 +79,7 @@ angular.module('GoogleSpreadsheets', [])
 		function getSheets(key, accessToken) {
 			// using php proxy to avoid CORS fail
                         // previously http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/ ...
-			var url = 'http://barometer.lab.gent/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
+			var url = 'http://barometer.lab.gent/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
                         
 			if(accessToken) {
 				url += '?access_token=' + accessToken;

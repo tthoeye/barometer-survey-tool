@@ -283,11 +283,11 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 									collection.push(ex);
 
 									if(ex.url && ($rootScope.participant == 'Reviewer' || $rootScope.participant == 'Coordinator') ) {
-										var url = ex.url.replace('https://docs.google.com/file/d/', '');
+										// var url = ex.url.replace('https://docs.google.com/file/d/', ''); @Deprecated
+                                                                                var url = ex.url.replace('https://drive.google.com/file/d/', '');
 										url = url.split('/', 1);
 
 										var fileId = url[0];
-
 										$http({
 											method: 'GET',
 											url: '/drivecopy.php',
@@ -296,7 +296,7 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 												email: $rootScope.userEmail,
 												action: 'grantPerms'
 											}
-										})
+                                                                                })
 										.error(function(data, status, headers, config){
 											console.log('Failed to grant access to resource');
 										});
