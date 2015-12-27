@@ -71,61 +71,8 @@ $_SESSION['service_token'] = $client->getAccessToken();
   Routing
  ************************************************/
 
-if ( 'uploadNew' == $_GET['action'] ) {
-	/**
-	 * We're authenticated, now we will make a copy of the uploaded file
-	 * in the service account in case a survey taker later deletes the file
-	 * from their personal drive.
-	 */
-	$country = htmlspecialchars( $_GET['country'] );
-	$original_title = htmlspecialchars( $_GET['fileName'] );
-	$original_id = htmlspecialchars( $_GET['fileId'] );
-        $original_owner = htmlspecialchars( $_GET['userEmail'] );
-	$copied_file = new Google_Service_Drive_DriveFile();
-
-	// Prefix the filename with the country the survey is being taken for
-	$copied_file->setTitle( $country . ' - ' . $original_title );
-
-	try {
-		$new_file = $service->files->copy($original_id, $copied_file);
-	} catch ( Exception $e ) {
-		$response = array(
-			'error' => $e->getMessage()
-		);
-
-		header("HTTP/1.0 502 Bad Gateway");
-		exit( json_encode( $response ) );
-	}
-
-	$newPermission = new Google_Service_Drive_Permission();
-	$newPermission->setRole( 'writer' );
-	$newPermission->setType( 'user' );
-	$newPermission->setValue( 'files@thewebindex.org' );
-        
-        $origPermission = new Google_Service_Drive_Permission();
-	$origPermission->setRole( 'reader' );
-	$origPermission->setType( 'user' );
-	$origPermission->setValue( $original_owner );
-
-	try {
-		$perm = $service->permissions->insert( $new_file->id, $newPermission, array('sendNotificationEmails' => false) );
-                if ($original_owner) {
-                    $perm = $service->permissions->insert( $new_file->id, $origPermission, array('sendNotificationEmails' => false) );
-                }
-	} catch ( Exception $e ) {
-		$response = array(
-			'error' => $e->getMessage()
-		);
-
-		header("HTTP/1.0 502 Bad Gateway");
-		exit( json_encode( $response ) );
-	}
-
-	echo json_encode( $new_file );
-
-} 
 // Grant Permissions
-elseif ( 'grantPerms' == $_GET['action'] ) {
+if ( 'grantPerms' == $_GET['action'] ) {
     if (isset($_GET['email']) && isset($_GET['file_id'])) {
         grantPermissions(
             $_GET['email'], 
@@ -139,24 +86,13 @@ elseif ( 'grantPerms' == $_GET['action'] ) {
 } 
 // Upload File
 elseif ( 'upload' == $_GET['action'] ) {
-    $name = $_GET['filename'];
-    if ($_FILES[$name] && is_uploaded_file($_FILES[$name]['tmp_name'])) {
-        $uploadedFile = $_FILES[$name];
-        
-        $file = new Google_Service_Drive_DriveFile();
-        $file->setTitle($uploadedFile['name']);
-        $result = $service->files->insert(
-            $file,
-            array(
-              'data' => file_get_contents($uploadedFile['tmp_name']),
-              'mimeType' => 'application/octet-stream',
-              'uploadType' => 'multipart'
-            )
+    if (isset($_GET['filename']) && isset($_FILES[$_GET['filename']])) {
+        uploadFile(
+            $_GET['filename'],
+            $_GET['country']
         );
-        
-        exit(json_encode($result));
     } else {
-        exit(json_encode(array('error'=>'No file specified or security risk')));
+        exit(json_encode(array('error'=>'No file specified')));
     }
 }
 
@@ -180,4 +116,27 @@ function grantPermissions($email, $file_id, $type = 'user', $role = 'reader') {
             header("HTTP/1.0 502 Bad Gateway");
             exit( json_encode( $response ) );
     }
+}
+
+function uploadFile($filename, $country = false) {
+    $uploadedFile = $_FILES[$filename];
+    if (!is_uploaded_file($uploadedFile[tmp_name])) {
+        $response = array(
+            'error' => 'Bad file'
+        );
+        header("HTTP/1.0 403 Forbidden");
+        exit (json_encode($response));
+    }
+    $file = new Google_Service_Drive_DriveFile();
+    $title = ($country) ? $country . ' - ' . $uploadedFile['name'] : $uploadedFile['name'];
+    $file->setTitle($title);
+    $result = $service->files->insert(
+        $file,
+        array(
+          'data' => file_get_contents($uploadedFile['tmp_name']),
+          'mimeType' => 'application/octet-stream',
+          'uploadType' => 'multipart'
+        )
+    );
+    exit(json_encode($result));    
 }
