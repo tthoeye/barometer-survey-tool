@@ -18,14 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+session_start();
+
+require_once dirname(__FILE__) . '/vendor/autoload.php';
+require_once dirname(__FILE__) . '/survey-config.php';
+
 /************************************************
   Make an API request authenticated with a service
   account.
  ************************************************/
-set_include_path ( __DIR__ );
-require_once 'Google/Client.php';
-require_once 'Google/Service/Drive.php';
-require_once 'survey-config.php';
+
 
 if ( !defined( 'SERVICE_ACCOUNT_NAME' ) || !defined( 'KEY_FILE_LOCATION' ) ) {
 	$response = array(
@@ -64,6 +66,10 @@ if( $client->getAuth()->isAccessTokenExpired() ) {
 	$client->getAuth()->refreshTokenWithAssertion( $credentials );
 }
 $_SESSION['service_token'] = $client->getAccessToken();
+
+/************************************************
+  Routing
+ ************************************************/
 
 if ( 'uploadNew' == $_GET['action'] ) {
 	/**
@@ -117,22 +123,61 @@ if ( 'uploadNew' == $_GET['action'] ) {
 
 	echo json_encode( $new_file );
 
-} elseif ( 'grantPerms' == $_GET['action'] ) {
-	$new_email = htmlspecialchars( $_GET['email'] );
-	$file_id = htmlspecialchars( $_GET['fileId'] );
+} 
+// Grant Permissions
+elseif ( 'grantPerms' == $_GET['action'] ) {
+    if (isset($_GET['email']) && isset($_GET['file_id'])) {
+        grantPermissions(
+            $_GET['email'], 
+            $_GET['file_id'],
+            $_GET['role'],
+            $_GET['user']
+        );
+    } else {
+        exit(json_encode(array('error'=>'No file specified or no user specified')));
+    }
+} 
+// Upload File
+elseif ( 'upload' == $_GET['action'] ) {
+    $name = $_GET['filename'];
+    if ($_FILES[$name] && is_uploaded_file($_FILES[$name]['tmp_name'])) {
+        $uploadedFile = $_FILES[$name];
+        
+        $file = new Google_Service_Drive_DriveFile();
+        $file->setTitle($uploadedFile['name']);
+        $result = $service->files->insert(
+            $file,
+            array(
+              'data' => file_get_contents($uploadedFile['tmp_name']),
+              'mimeType' => 'application/octet-stream',
+              'uploadType' => 'multipart'
+            )
+        );
+        
+        exit(json_encode($result));
+    } else {
+        exit(json_encode(array('error'=>'No file specified or security risk')));
+    }
+}
 
-	$newPermission = new Google_Service_Drive_Permission();
-	$newPermission->setRole( 'reader' );
-	$newPermission->setType( 'user' );
-	$newPermission->setValue( $new_email );
+/************************************************
+  Functions
+ ************************************************/
 
-	try {
-		$perm = $service->permissions->insert( $file_id, $newPermission, array('sendNotificationEmails' => false) );
-	} catch ( Exception $e ) {
-		$response = array(
-			'error' => $e->getMessage()
-		);
+function grantPermissions($email, $file_id, $type = 'user', $role = 'reader') {
 
-		exit( json_encode( $response ) );
-	}
+    $newPermission = new Google_Service_Drive_Permission();
+    $newPermission->setRole( $role );
+    $newPermission->setType( $type );
+    $newPermission->setValue( $email );
+
+    try {
+            $perm = $service->permissions->insert( $file_id, $newPermission, array('sendNotificationEmails' => false) );
+    } catch ( Exception $e ) {
+            $response = array(
+                    'error' => $e->getMessage()
+            );
+            header("HTTP/1.0 502 Bad Gateway");
+            exit( json_encode( $response ) );
+    }
 }
