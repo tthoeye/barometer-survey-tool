@@ -1104,98 +1104,52 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 						return;
 					}
 
-					const boundary = '-------314159265358979323846';
-					const delimiter = "\r\n--" + boundary + "\r\n";
-					const close_delim = "\r\n--" + boundary + "--";
+                                        var fd = new FormData();
+                                        fd.append('file', file);
 
-					var reader = new FileReader();
-					reader.readAsBinaryString(file);
-					reader.onload = function(e) {
-						var contentType = file.type || 'application/octet-stream';
-						var metadata = {
-							'title': file.name,
-							'mimeType': contentType
-						};
+                                        $http({
+                                                method: 'POST',
+                                                url: '/drivecopy.php',
+                                                params: {
+                                                    action: 'upload',
+                                                    filename: file.name,
+                                                    country: $rootScope.country
+                                                },
+                                                headers: {
+                                                    'Content-Type': undefined
+                                                },
+                                                transformRequest: angular.identity,
+                                                data: fd
+                                        }).then(
+                                                function uploadSuccess(results) {
+                                                    $scope.uploading = false;
+                                                    $scope.uploadState = "Uploaded";
+                                                    
+                                                    $scope.model.fileId = results.data.id;
+                                                    $scope.model.url = results.data.alternateLink;
+                                                    $scope.model.title  = results.data.title;
+                                                    $scope.model.locked = true;
+                                                    $scope.model.uploaded = true;
+                                                    
+                                                    // Grant Permissions
+                                                    $http({
+                                                            method: 'GET',
+                                                            url: '/drivecopy.php',
+                                                            params: {
+                                                                action: 'grantPerms',
+                                                                file_id: results.data.id,
+                                                                email: $rootScope.userEmail
+                                                            },
+                                                    }).then(function() {
 
-						var base64Data = btoa(reader.result);
-						var multipartRequestBody =
-								delimiter +
-								'Content-Type: application/json\r\n\r\n' +
-								JSON.stringify(metadata) +
-								delimiter +
-								'Content-Type: ' + contentType + '\r\n' +
-								'Content-Transfer-Encoding: base64\r\n' +
-								'\r\n' +
-								base64Data +
-								close_delim;
-
-						var request = gapi.client.request({
-								'path': '/upload/drive/v2/files',
-								'method': 'POST',
-								'params': {'uploadType': 'multipart'},
-								'headers': {
-									'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
-								},
-								'body': multipartRequestBody
-						});
-
-						$scope.uploadState = "Uploading...";
-						$scope.uploading = true;
-
-						request.execute(function(results, status) {
-							status = JSON.parse(status);
-							status = status.gapiRequest.data;
-
-							$scope.uploading = false;
-
-							if(status.status == 200) {
-								$scope.uploadState = "Uploaded";
-								$scope.model.fileId = results.id;
-								// Give editor access to the service account to allow it to copy
-								// the uploaded file elsewhere through drivecopy.php
-								var promise = gdrive.insertPermission($scope.model.fileId, 'user', SERVICE_ACCOUNT, 'writer');
-
-								// Send file ID, name, and the survey country to the PHP proxy for
-								// futher file operations
-								promise.then(function(){
-									$http({
-										method: 'GET',
-										url: '/drivecopy.php',
-										params: {
-											fileId: $scope.model.fileId,
-											fileName: results.title,
-											country: $rootScope.country,
-                                                                                        userEmail: $rootScope.userEmail,
-											action: 'uploadNew'
-										}
-									})
-									.success(function(data, status, headers, config){
-										if(data.error) {
-											$scope.uploadState = "Upload Failed! " + data.error;
-											$scope.model.locked = false;
-											$scope.model.uploaded = false;
-										} else {
-											$scope.model.url = data.alternateLink;
-											$scope.model.title  = data.title;
-											$scope.model.locked = true;
-											$scope.model.uploaded = true;
-										}
-									})
-									.error(function(data, status, headers, config){
-										$scope.uploadState = "Upload Failed! " + data.error;
-										$scope.model.locked = false;
-										$scope.model.uploaded = false;
-									});
-								});
-							}
-							else {
-								$scope.uploadState = "Upload Failed! Try again.";
-								$scope.model.locked = false;
-								$scope.model.uploaded = false;
-							}
-						});
-					}
-				}
+                                                    })
+                                                }, function uploadFailed(data, status, headers, config) {
+                                                    $scope.uploadState = "Upload Failed! Try again.";
+                                                    $scope.model.locked = false;
+                                                    $scope.model.uploaded = false;
+                                                }
+                                        );
+                                }
 			}
 		}
 	} ])

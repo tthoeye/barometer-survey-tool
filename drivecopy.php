@@ -50,6 +50,7 @@ $service = new Google_Service_Drive( $client );
   we have to list them manually. We also supply
   the service account
  ************************************************/
+
 if ( isset( $_SESSION['service_token'] ) ) {
 	$client->setAccessToken( $_SESSION['service_token'] );
 }
@@ -75,6 +76,7 @@ $_SESSION['service_token'] = $client->getAccessToken();
 if ( 'grantPerms' == $_GET['action'] ) {
     if (isset($_GET['email']) && isset($_GET['file_id'])) {
         grantPermissions(
+            $service,
             $_GET['email'], 
             $_GET['file_id'],
             $_GET['role'],
@@ -86,12 +88,20 @@ if ( 'grantPerms' == $_GET['action'] ) {
 } 
 // Upload File
 elseif ( 'upload' == $_GET['action'] ) {
-    if (isset($_GET['filename']) && isset($_FILES[$_GET['filename']])) {
-        uploadFile(
-            $_GET['filename'],
-            $_GET['country']
-        );
-    } else {
+    $found = false;
+    if (isset($_GET['filename'])) {
+        foreach($_FILES as $file) {
+            if ($_GET['filename'] == $file['name']) {
+                uploadFile(
+                    $service,
+                    $file,
+                    $_GET['country']
+                );
+                $found = true;
+            }
+        }
+    } 
+    if (!$found) {
         exit(json_encode(array('error'=>'No file specified')));
     }
 }
@@ -100,8 +110,11 @@ elseif ( 'upload' == $_GET['action'] ) {
   Functions
  ************************************************/
 
-function grantPermissions($email, $file_id, $type = 'user', $role = 'reader') {
+function grantPermissions($service, $email, $file_id, $type, $role) {
 
+    if (!$type || $type == '') { $type = 'user'; }
+    if (!$role || $role == '') { $role = 'reader'; }
+    
     $newPermission = new Google_Service_Drive_Permission();
     $newPermission->setRole( $role );
     $newPermission->setType( $type );
@@ -109,6 +122,7 @@ function grantPermissions($email, $file_id, $type = 'user', $role = 'reader') {
 
     try {
             $perm = $service->permissions->insert( $file_id, $newPermission, array('sendNotificationEmails' => false) );
+            exit( json_encode( $perm ) );
     } catch ( Exception $e ) {
             $response = array(
                     'error' => $e->getMessage()
@@ -116,27 +130,39 @@ function grantPermissions($email, $file_id, $type = 'user', $role = 'reader') {
             header("HTTP/1.0 502 Bad Gateway");
             exit( json_encode( $response ) );
     }
+    
 }
 
-function uploadFile($filename, $country = false) {
-    $uploadedFile = $_FILES[$filename];
-    if (!is_uploaded_file($uploadedFile[tmp_name])) {
-        $response = array(
-            'error' => 'Bad file'
-        );
-        header("HTTP/1.0 403 Forbidden");
-        exit (json_encode($response));
+function uploadFile($service, $uploadedfile, $country = false) {
+
+    if (!is_uploaded_file($uploadedfile['tmp_name'])) {
+            $response = array(
+                'error' => 'Bad file'
+            );
+            header("HTTP/1.0 403 Forbidden");
+            exit (json_encode($response));
     }
+    
     $file = new Google_Service_Drive_DriveFile();
-    $title = ($country) ? $country . ' - ' . $uploadedFile['name'] : $uploadedFile['name'];
+    $title = ($country) ? $country . ' - ' . $uploadedfile['name'] : $uploadedfile['name'];
     $file->setTitle($title);
-    $result = $service->files->insert(
-        $file,
-        array(
-          'data' => file_get_contents($uploadedFile['tmp_name']),
-          'mimeType' => 'application/octet-stream',
-          'uploadType' => 'multipart'
-        )
-    );
-    exit(json_encode($result));    
+    
+    try {
+            $result = $service->files->insert(
+                    $file,
+                    array(
+                      'data' => file_get_contents($uploadedfile['tmp_name']),
+                      'mimeType' => 'application/octet-stream',
+                      'uploadType' => 'multipart'
+                    )
+            );
+            exit(json_encode($result));  
+    } catch ( Exception $e ) {
+            $response = array(
+                    'error' => $e->getMessage()
+            );
+            header("HTTP/1.0 502 Bad Gateway");
+            exit( json_encode( $response ) );
+    }
+      
 }
