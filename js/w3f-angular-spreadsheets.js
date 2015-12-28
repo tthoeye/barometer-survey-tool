@@ -70,9 +70,7 @@ angular.module('GoogleSpreadsheets', [])
 			return row;
 		};
 
-		function getSheets(key, accessToken) {
-			// using php proxy to avoid CORS fail
-                        // previously http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/ ...
+		function getSheets(key) {
 			var url = 'https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
                         
 			var deferred = defer();
@@ -122,9 +120,7 @@ angular.module('GoogleSpreadsheets', [])
 			return deferred.promise;
 		};
 
-		function getRows(key, sheet, accessToken, useKey) {
-			// using php proxy to avoid CORS fail
-                        // previously http://odb.opendataresearch.org/proxy/proxy.php
+		function getRows(key, sheet, useKey) {
 			var url = 'https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
 
 			var deferred = defer();
@@ -168,7 +164,7 @@ angular.module('GoogleSpreadsheets', [])
 			return deferred.promise;
 		};
 
-		function updateRow(url, values, accessToken) {
+		function updateRow(url, values) {
 			var deferred = defer();
 			var parseResponse = function(data) {
 				var xml = new DOMParser().parseFromString(data, "text/xml");
@@ -202,7 +198,7 @@ angular.module('GoogleSpreadsheets', [])
 			return deferred.promise;
 		};
 
-		function insertRow(sheet, values, accessToken) {
+		function insertRow(sheet, values) {
 			var url = 'https://spreadsheets.google.com/feeds/list/' + sheet.key + '/' + sheet.id + '/private/full';
 			var deferred = defer();
 
@@ -228,7 +224,7 @@ angular.module('GoogleSpreadsheets', [])
 			return deferred.promise;
 		};
 
-		function deleteRow(url, accessToken, id) {
+		function deleteRow(url, id) {
 			var deferred = defer();
 
 			$http({

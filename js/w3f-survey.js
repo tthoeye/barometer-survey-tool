@@ -269,10 +269,10 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 					promise;
 
 			if($rootScope.links.control['Last Access']) {
-				promise = gs.updateRow($rootScope.links.control['Last Access'].edit, record, $rootScope.accessToken);
+				promise = gs.updateRow($rootScope.links.control['Last Access'].edit, record);
 			}
 			else {
-				promise = gs.insertRow($rootScope.answerSheets.Control, record, $rootScope.accessToken);
+				promise = gs.insertRow($rootScope.answerSheets.Control, record);
 			}
 
 			promise.then(function() {
@@ -286,7 +286,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 		$rootScope.unlockSurvey = function() {
 			// ADDED TO AVOID FAILING WHEN THE CONTROL DOES NOT EXIST
 			if($rootScope.links.control['Last Access']) {
-				gs.deleteRow($rootScope.links.control['Last Access'].edit, $rootScope.accessToken);
+				gs.deleteRow($rootScope.links.control['Last Access'].edit);
 			}
 		}
 
@@ -527,10 +527,10 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 								var promise;
 
 								if(links[qid]) {
-									promise = gs.updateRow(links[qid].edit, record, $rootScope.accessToken);
+									promise = gs.updateRow(links[qid].edit, record);
 								}
 								else {
-									promise = gs.insertRow($rootScope.answerSheets.Answers, record, $rootScope.accessToken);
+									promise = gs.insertRow($rootScope.answerSheets.Answers, record);
 								}
 
 								promise.then(function(row) {
@@ -550,7 +550,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 										note: note.note
 									};
 
-									var promise = gs.insertRow($rootScope.answerSheets.Notes, record, $rootScope.accessToken);
+									var promise = gs.insertRow($rootScope.answerSheets.Notes, record);
 
 									promise.then(function(row) {
 										note[':links'] = row[':links'];
@@ -581,7 +581,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 										record.resolved = new Date().format();
 									}
 
-									var promise = gs.updateRow(note[':links'].edit, record, $rootScope.accessToken);
+									var promise = gs.updateRow(note[':links'].edit, record);
 
 									promise.then(function(row) {
 										if($rootScope.forceReadOnly) {
@@ -614,7 +614,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 
 									// Delete from answer sheet if it exists there
 									if(note[':links']) {
-										pq[qid] = gs.deleteRow(note[':links'].edit, $rootScope.accessToken, qid).then(complete, complete);
+										pq[qid] = gs.deleteRow(note[':links'].edit, qid).then(complete, complete);
 									}
 									else {
 										complete({ id: qid });
@@ -776,14 +776,14 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 				gs.updateRow($rootScope.links.control['Status'].edit, {
 					field: 'Status',
 					value: completing
-				}, $rootScope.accessToken)
-					.then(function() {
-						$rootScope.status = {
-							message: "Submitted!",
-							readOnly: "This survey is now read-only.",
-							success: true
-						}
-					});
+				})
+                                .then(function() {
+                                        $rootScope.status = {
+                                                message: "Submitted!",
+                                                readOnly: "This survey is now read-only.",
+                                                success: true
+                                        }
+                                });
 
 				$rootScope.unlockSurvey();
 				$rootScope.readOnly = true;
@@ -1398,7 +1398,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                 
                 window.signinSuccess = function() {
                     var user = gapi.auth2.getAuthInstance().currentUser.get();
-                    $rootScope.accessToken = user.getAuthResponse().access_token;
                     $rootScope.userEmail = user.getBasicProfile().getEmail().toLowerCase();
                     if ($rootScope.loading) {
                         return;
