@@ -522,7 +522,8 @@ function handleStateChange(country, state) {
   subs.country = subs.name;
   subs.researcherGoogle = subs.researcherEmail.split(/,/)[0];
   subs.reviewerGoogle = subs.reviewerEmail.split(/,/)[0];
-
+  subs.selfAssessment = control.getRange(country.row, 19).getValue(); // Previously MISC column
+  
   // And all configuation sheet values
   var config = loadKVData(ass.getSheetByName("Config"));
 
