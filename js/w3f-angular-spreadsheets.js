@@ -17,12 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 angular.module('GoogleSpreadsheets', [])
-        .config(['$httpProvider', function($httpProvider) {
-                $httpProvider.defaults.useXDomain = true;
-                $httpProvider.defaults.headers.common = 'Content-Type: application/json';
-                delete $httpProvider.defaults.headers.common['X-Requested-With'];
-            }
-        ])
 	.factory('spreadsheets', [ '$http', '$q', function($http, $q) {
 		var service = this;
 
@@ -79,17 +73,13 @@ angular.module('GoogleSpreadsheets', [])
 		function getSheets(key, accessToken) {
 			// using php proxy to avoid CORS fail
                         // previously http://odb.opendataresearch.org/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/ ...
-			var url = 'http://barometer.lab.gent/proxy/proxy.php?https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
-                        
-			if(accessToken) {
-				url += '?access_token=' + accessToken;
-			}
+			var url = 'https://spreadsheets.google.com/feeds/worksheets/' + key + '/private/full';
                         
 			var deferred = defer();
 
 			$http({ 
 				method: 'GET',
-                                url: url,
+                                url: '/google-spreadsheets.php?action=retreive&url=' + url,
 				timeout: deferred,
 			})
 				.success(function(data, status, headers, config) {
@@ -135,17 +125,13 @@ angular.module('GoogleSpreadsheets', [])
 		function getRows(key, sheet, accessToken, useKey) {
 			// using php proxy to avoid CORS fail
                         // previously http://odb.opendataresearch.org/proxy/proxy.php
-			var url = 'http://barometer.lab.gent/proxy/proxy.php?https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
-
-			if(accessToken) {
-				url += '?access_token=' + accessToken;
-			}
+			var url = 'https://spreadsheets.google.com/feeds/list/' + key + '/' + sheet.id + '/private/full';
 
 			var deferred = defer();
 
 			$http({
 				method: 'GET',
-				url: url,
+				url: '/google-spreadsheets.php?action=retreive&url=' + url,
 				timeout: deferred
 			})
 				.success(function(data, status, headers, config) {
@@ -193,7 +179,7 @@ angular.module('GoogleSpreadsheets', [])
 
 			$http({
 				method: 'POST',
-				url: '/submit.php?accessToken=' + accessToken + '&url=' + url + '&method=PUT',
+				url: '/google-spreadsheets.php?action=submit&url=' + url + '&method=PUT',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
 				},
@@ -222,7 +208,7 @@ angular.module('GoogleSpreadsheets', [])
 
 			$http({
 				method: 'POST',
-				url: '/submit.php?accessToken=' + accessToken + '&url=' + url + '&method=POST',
+				url: '/google-spreadsheets.php?action=submit&url=' + url + '&method=POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
 				},
@@ -247,7 +233,7 @@ angular.module('GoogleSpreadsheets', [])
 
 			$http({
 				method: 'GET',
-				url: '/submit.php?accessToken=' + accessToken + '&url=' + url + '&method=DELETE',
+				url: '/google-spreadsheets.php?action=submit&url=' + url + '&method=DELETE',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
 				},

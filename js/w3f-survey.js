@@ -24,14 +24,8 @@
 
 // Document ID of master control sheet
 var MASTER_KEY = '1ZSUifyBU0GZw4zcUw25TMlFdPc62Is8DgPMgYc35Qkc';
-// Browser API Key (set in developers console)
-var API_KEY = 'AIzaSyAQhae-OZhMJXA8s-4DGHzLKuXSV6_YN7g';
 // OAuth 2.0 client ID for "Web application client" (set in developers console)
 var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
-// OAuth 2.0 client ID for "Service account client" (set in developers console)
-var SERVICE_ACCOUNT = '333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k@developer.gserviceaccount.com';
-// Scope definition of Google API's to access
-var SCOPE = 'profile email https://spreadsheets.google.com/feeds https://www.googleapis.com/auth/drive';
 
 // Gimme a range op!
 Array.prototype.range = function(n) {
@@ -1064,7 +1058,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 	} ])
 
 	// A field for specifying a URL or a uploaded file
-	.directive('uploadableUrl', [ '$rootScope', '$http', 'gdrive', function($rootScope, $http, gdrive) {
+	.directive('uploadableUrl', [ '$rootScope', '$http', function($rootScope, $http) {
 		return {
 			templateUrl: 'tpl/uploadable-url.html',
 			restrict: 'E',
@@ -1109,7 +1103,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 
                                         $http({
                                                 method: 'POST',
-                                                url: '/drivecopy.php',
+                                                url: '/google-drive.php',
                                                 params: {
                                                     action: 'upload',
                                                     filename: file.name,
@@ -1134,7 +1128,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                                                     // Grant Permissions
                                                     $http({
                                                             method: 'GET',
-                                                            url: '/drivecopy.php',
+                                                            url: '/google-drive.php',
                                                             params: {
                                                                 action: 'grantPerms',
                                                                 file_id: results.data.id,
@@ -1348,7 +1342,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 		});
 
                 window.init = function() {
-                    console.log("init");
                     gapi.load('auth2', function() {
                         auth2 = gapi.auth2.init({
                             client_id: CLIENT_ID,
@@ -1372,7 +1365,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                                 $rootScope.showSignin = true;
                                 $rootScope.$digest();
                                 gapi.signin2.render('signin2-button', {
-                                    'scope': SCOPE,
+                                    'scope': 'profile',
                                     'width': 220,
                                     'height': 50,
                                     'longtitle': true,
@@ -1383,7 +1376,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                             }
                         });   
                     });
-                    gapi.client.load('drive','v2');
                 };
                 
                 
@@ -1405,7 +1397,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                 
                 
                 window.signinSuccess = function() {
-                    console.log("signinSuccess");
                     var user = gapi.auth2.getAuthInstance().currentUser.get();
                     $rootScope.accessToken = user.getAuthResponse().access_token;
                     $rootScope.userEmail = user.getBasicProfile().getEmail().toLowerCase();
@@ -1423,106 +1414,5 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                 window.signinFailure = function() {
                     // Do nothing
                 }
-                /*
-                window.showSignin = function() {
-                    console.log("showsignin");
-                    $rootScope.showSignin = true;
-                    $rootScope.loaded = false;
-                    $rootScope.$digest();
-                    gapi.signin2.render('signin2-button', {
-                        'width': 220,
-                        'height': 50,
-                        'longtitle': true,
-                        'theme': 'dark',
-                    });
-                } 
-                
-		window.gapi_authenticated = function(authResult) {
-                    
-                        console.log("gapi_authenticated");
-                        console.log(authResult);
-                        
-			if(!authResult || authResult.error) {
-				$rootScope.showSignin = true;
-				$rootScope.$digest();
-				return;
-			}
-
-			if($rootScope.showSignin === false) {
-				return;
-			}
-                        
-			if(!authResult.status || !authResult.status.signed_in || $rootScope.accessToken) {
-				$rootScope.loading = false;
-				return;
-			}
-
-			var authComplete = function() {
-				$rootScope.accessToken = authResult.access_token;
-				$rootScope.showSignin = false;
-                                setTimeout(gapi_refresh, 10 * 1000);
-				loadSurvey();
-			}
-
-			var loadSurvey = function() {
-				$rootScope.loading = "Loading Survey...";
-
-				$rootScope.status = {
-					message: "Loading..."
-				};
-
-				$rootScope.$broadcast('load-survey');
-			}
-
-			// Get the user's email address, then continue loading
-			if(!$rootScope.userEmail) {
-				gapi.client.load('oauth2', 'v2', function() {
-					gapi.client.oauth2.userinfo.get().execute(function(resp) {
-						$rootScope.userEmail = resp.email.toLowerCase();
-						authComplete();
-					});
-				});
-
-				gapi.client.load('drive', 'v2');
-			}
-			else {
-				authComplete();
-			}
-		};
-
-		window.gapi_authenticate = function() {
-			// render the sign-in button
-			gapi.signin2.render('signin-button', {
-				client_id: CLIENT_ID,
-				scope: SCOPE,
-				cookie_policy: 'single_host_origin',
-				callback: 'gapi_authenticated'
-			});
-		};
-                
-                window.gapi_refreshed = function(refreshedAuth) {
-                    if (!refreshedAuth || refreshedAuth.error) {
-                        console.log("Error refreshing token");
-                    } else {
-                        console.log(gapi.auth.getToken());
-                        console.log(gapi.auth.getToken().expires_in);
-                        setTimeout(gapi_refresh, 10 * 1000);
-                    }
-                };
-                
-                window.gapi_refresh = function() {
-                    console.log("gapi_refresh");
-                    gapi.auth.authorize({
-                            client_id: CLIENT_ID,
-                            scope: SCOPE,
-                            immediate: true,
-                            cookie_policy: "single_host_origin",
-                            response_type: "token gsession"
-                    }, gapi_refreshed);
-                };
-                
-                //gapi.client.setApiKey(API_KEY);
-                //gapi_authenticate();
-                */
 	} ]);
 
