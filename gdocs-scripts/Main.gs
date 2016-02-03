@@ -140,11 +140,11 @@ function setupAnswerSheet(country, sheet) {
   }
 
   // Set the correct permissions for this sheet
-  ass.toast("Setting Answer sheet permissions...", country.name, -1);
+  ass.toast("Setting Answer sheet permissions...", country.name, 1);
 
   // Configure sharing. Make private, add editors, make DOMAIN-accessible.
-  var file = DriveApp.getFileById(sheet.getId()),
-      editors = sheet.getEditors();
+  var file = DriveApp.getFileById(sheet.getId());
+  var editors = file.getEditors();
 
   try {
     file.setShareableByEditors(true);
@@ -291,8 +291,9 @@ function refreshAnswerSheet(country, newStatus) {
 
       // Status has changed, due date has not. Update due date.
       if(dueDate == answerDue) {
-        setValue(answerControlSheet, "Status Due", newDueDate.toDateString());
-        control.getRange(country.row, 10).setValue(newDueDate.toDateString());
+        formattedNewDueDate = Utilities.formatDate(newDueDate, "GMT", "MM-dd-yyyy");
+        setValue(answerControlSheet, "Status Due", formattedNewDueDate);
+        control.getRange(country.row, 10).setValue(formattedNewDueDate);
       }
     }
     else {
@@ -412,7 +413,8 @@ function getDeadline(days_to_add, text) {
   days_to_add = days_to_add || 0;
 
   var currentTime = new Date();
-  var newTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate() + days_to_add);
+  //var newTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate() + days_to_add);
+  var newTime =  new Date(currentTime.getTime()+days_to_add*(24*3600*1000));
   var month = newTime.getMonth() + 1;
   var day = newTime.getDate();
   var year = newTime.getFullYear();
@@ -422,9 +424,15 @@ function getDeadline(days_to_add, text) {
     month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     return day + suffix[day-1] + " " + month[newTime.getMonth()] + " " + year;
   } else {
-    return day + "/" + month + "/" + year;
+    //return day + "/" + month + "/" + year;
+    return Utilities.formatDate(newTime, "GMT", "MM-dd-yyyy");
   }
 }
+
+function testDeadline() {
+  Logger.log(Utilities.formatDate(new Date(), "GMT", "MM-dd-yyyy"));
+}
+  
 
 function archiveSheet(id, stage) {
     var folderID = getConfig("archive_folder");
@@ -510,20 +518,20 @@ function handleStateChange(country, state) {
       status = states[state];
 
   var subs = {};
-
+  Logger.log("handleStateChanged called with " + country + " and " + state);
   // Perform shallow-copy of country variables,
   for(var i in country) {
     subs[i] = country[i];
   }
-
+  
   // And then some additional subs
   subs.surveyUrl = getConfig('survey_url') + subs.answerSheet;
   subs.handbookUrl = getConfig('handbook'); // TODO: How do I best get a link out of this?
   subs.country = subs.name;
   subs.researcherGoogle = subs.researcherEmail.split(/,/)[0];
   subs.reviewerGoogle = subs.reviewerEmail.split(/,/)[0];
-  subs.selfAssessment = control.getRange(country.row, 19).getValue(); // Previously MISC column
-  
+  subs.selfAssessment = control.getRange(country.row, 19).getValue();
+  // ass.toast(subs.selfAssessment);
   // And all configuation sheet values
   var config = loadKVData(ass.getSheetByName("Config"));
 
@@ -542,7 +550,7 @@ function handleStateChange(country, state) {
   // Researcher Email
   if(subs.researcherEmail == '') {
     Logger.log("No researcher address found for the researcher yet. Please assign a researcher first.");
-
+ 
     control.getRange(country.row, 5).setValue(states.recruitment.label);
     return;
   }
