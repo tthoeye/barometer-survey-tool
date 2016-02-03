@@ -26,7 +26,6 @@
 var MASTER_KEY = '1ZSUifyBU0GZw4zcUw25TMlFdPc62Is8DgPMgYc35Qkc';
 // OAuth 2.0 client ID for "Web application client" (set in developers console)
 var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
-
 // Gimme a range op!
 Array.prototype.range = function(n) {
 	return Array.apply(null, Array(n)).map(function (_, i) {return i;});
@@ -80,7 +79,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 	})
 
 	// Top-level controller
-	.controller('W3FSurveyController', [ 'loader', 'spreadsheets', 'gdrive', '$scope', '$rootScope', '$q', '$cookies', '$routeParams', '$interval', '$http', function(loader, gs, gdrive, $scope, $rootScope, $q, $cookies, $routeParams, $interval, $http) {
+	.controller('W3FSurveyController', [ 'loader', 'spreadsheets', '$scope', '$rootScope', '$q', '$cookies', '$routeParams', '$interval', '$http', function(loader, gs, $scope, $rootScope, $q, $cookies, $routeParams, $interval, $http) {
 		var answerKey = $routeParams.answerKey, queue;
 
 		if($routeParams.masterKey == 'clear') {
@@ -1058,7 +1057,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 	} ])
 
 	// A field for specifying a URL or a uploaded file
-	.directive('uploadableUrl', [ '$rootScope', '$http', function($rootScope, $http) {
+	.directive('uploadableUrl', [ '$rootScope', '$http', '$q', function($rootScope, $http, $q) {
 		return {
 			templateUrl: 'tpl/uploadable-url.html',
 			restrict: 'E',
@@ -1126,7 +1125,7 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                                                     $scope.model.uploaded = true;
                                                     
                                                     // Grant Permissions
-                                                    $http({
+                                                    var userPermPromise = $http({
                                                             method: 'GET',
                                                             url: '/google-drive.php',
                                                             params: {
@@ -1134,9 +1133,24 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                                                                 file_id: results.data.id,
                                                                 email: $rootScope.userEmail
                                                             },
-                                                    }).then(function() {
-
-                                                    })
+                                                    });
+                                                    var coordinatorEmail = $rootScope.control['Coordinator Email'];
+                                                    var coordinatorPermPromise = $http({
+                                                            method: 'GET',
+                                                            url: '/google-drive.php',
+                                                            params: {
+                                                                action: 'grantPerms',
+                                                                file_id: results.data.id,
+                                                                email: coordinatorEmail
+                                                            },
+                                                    });
+                                                    
+                                                    $q.all([userPermPromise, coordinatorPermPromise]).then(function () {
+                                                        // Success handler
+                                                    }, function() {
+                                                        // Failure handler
+                                                    });
+                                                    
                                                 }, function uploadFailed(data, status, headers, config) {
                                                     $scope.uploadState = "Upload Failed! Try again.";
                                                     $scope.model.locked = false;
