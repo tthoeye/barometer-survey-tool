@@ -488,7 +488,6 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
 								}, {
 									questionid: qid
 								});
-
 								// Copy over any supporting information
                                                                 // @TODO: read number of supporting columns from answer sheet!
 								for(var i = 0; i < 10; i++) {
@@ -1146,9 +1145,11 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                                                     });
                                                     
                                                     $q.all([userPermPromise, coordinatorPermPromise]).then(function () {
-                                                        // Success handler
+                                                        
                                                     }, function() {
-                                                        // Failure handler
+                                                        $scope.uploadState = "Failed setting upload permissions! Try again.";
+                                                        $scope.model.locked = false;
+                                                        $scope.model.uploaded = false;
                                                     });
                                                     
                                                 }, function uploadFailed(data, status, headers, config) {
@@ -1372,22 +1373,17 @@ angular.module('W3FWIS', [ 'GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader
                         // Sign in the user if they are currently signed in.
                         
                         auth2.then(function() {
-                            if (auth2.isSignedIn.get() == true) {
-                                auth2.signIn();
-                                signinSuccess();
-                            } else {
-                                $rootScope.showSignin = true;
-                                $rootScope.$digest();
-                                gapi.signin2.render('signin2-button', {
-                                    'scope': 'profile',
-                                    'width': 220,
-                                    'height': 50,
-                                    'longtitle': true,
-                                    'theme': 'dark',
-                                    'onSuccess': signinSuccess,
-                                    'onFailure': signinFailure
-                                });
-                            }
+                            $rootScope.showSignin = true;
+                            $rootScope.$digest();
+                            gapi.signin2.render('signin2-button', {
+                                'scope': 'profile',
+                                'width': 220,
+                                'height': 50,
+                                'longtitle': true,
+                                'theme': 'dark',
+                                'onSuccess': signinSuccess,
+                                'onFailure': signinFailure
+                            });
                         });   
                     });
                 };

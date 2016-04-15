@@ -329,8 +329,9 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 						}
 
 						// Avoid duplicate notes:
-						var notes = $rootScope.notes[note.questionid],
-						    lastNote = notes.length > 0 && notes[notes.length-1];
+						var notes = $rootScope.notes[note.questionid];
+                                                /*
+						var lastNote = notes.length > 0 && notes[notes.length-1];
 
 						if(!lastNote || lastNote && lastNote.note != note.note) {
 							if(!note.date && note.edited) {
@@ -338,6 +339,8 @@ angular.module('W3FSurveyLoader', [ 'GoogleSpreadsheets' ])
 							}
 							$rootScope.notes[note.questionid].push(note);
 						}
+                                                */
+                                                $rootScope.notes[note.questionid].push(note);
 					});
 
 					_.each($rootScope.sectionOrder, function(sectionid) {
