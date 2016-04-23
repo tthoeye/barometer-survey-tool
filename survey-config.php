@@ -24,5 +24,5 @@
 // for the service account
 
 //define('CLIENT_ID', '333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k.apps.googleusercontent.com');
-define('SERVICE_ACCOUNT_NAME', '333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k@developer.gserviceaccount.com');
-define('KEY_FILE_LOCATION', 'odb-ccad737d0c11.p12');
+define('SERVICE_ACCOUNT_NAME', 'open-data-barometer-year-4@open-data-barometer.iam.gserviceaccount.com');
+define('KEY_FILE_LOCATION', 'Open Data Barometer-46589caf2c5b.p12');

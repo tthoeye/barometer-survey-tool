@@ -25,7 +25,8 @@
 // Document ID of master control sheet
 var MASTER_KEY = '1ZSUifyBU0GZw4zcUw25TMlFdPc62Is8DgPMgYc35Qkc';
 // OAuth 2.0 client ID for "Web application client" (set in developers console)
-var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
+//var CLIENT_ID = '333545842886-tocobflgg35ei3c5orgd7hdbpsecr4t5.apps.googleusercontent.com';
+var CLIENT_ID = '333545842886-47b91tntgqk0d7mdqs4s4so9d8b3pcb9.apps.googleusercontent.com';
 // Gimme a range op!
 Array.prototype.range = function(n) {
 	return Array.apply(null, Array(n)).map(function (_, i) {return i;});

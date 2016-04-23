@@ -25,6 +25,7 @@
 
 var DOMAIN = 'barometer.lab.gent'; // previously webfoundation.org
 var SURVEYURL = 'http://barometer.lab.gent'; // previously http://odb.opendataresearch.org/
+var SERVICEACCOUNT = 'open-data-barometer-year-4@open-data-barometer.iam.gserviceaccount.com'; // service acct in dev console, e.g. 333545842886-o72vrqsf58800nu1g9jdjjd1r564lp2k@developer.gserviceaccount.com
 /**
  * Return the survey URL for a particular answer sheet key
  */
@@ -50,6 +51,10 @@ function getParticipants(country) {
       name: country.reviewerName,
       emails: country.reviewerEmail.split(/\s*,\s*/),
       states: [ 'review' ]
+    },
+    service: {
+      name: "serviceaccount",
+      emails: [ SERVICEACCOUNT ]
     }
   };
 }
@@ -435,12 +440,13 @@ function testDeadline() {
   
 
 function archiveSheet(id, stage) {
+    Logger.log('Archiving ' + id + ' in stage ' + stage);
     var folderID = getConfig("archive_folder");
     // var sheet = DocsList.getFileById(id); -> DEPRECATED
     var sheet = DriveApp.getFileById(id);
     // var folder = DocsList.getFolderById(folderID); -> DEPRECTAED
     var folder = DriveApp.getFolderById(folderID);
-    var copy = sheet.makeCopy("ARCHIVE ONLY: " + sheet.getName() + " - Stage " + stage.label + " - " + getDeadline());
+    var copy = sheet.makeCopy("ARCHIVE ONLY: " + sheet.getName() + " - Stage " + stage + " - " + getDeadline());
     // copy.addToFolder(folder); -> DEPRECATED
     folder.addFile(copy);
 }
@@ -611,7 +617,7 @@ function handleStateChange(country, state) {
 
     // Spot check
     case 'spotcheck':
-      archiveSheet(country.answerSheet, status);
+      archiveSheet(country.answerSheet, status.label);
 
       // Log
       addNote("Spot check by " + country.coordinatorName);
